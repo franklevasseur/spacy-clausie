@@ -12,6 +12,7 @@ import spacy
 import lemminflect
 import logging
 import typing
+from spacy import Language
 
 from spacy.tokens import Span, Doc
 from spacy.matcher import Matcher
@@ -201,9 +202,11 @@ class Clause:
     ):
 
         if inflect and not as_text:
-            logging.warning("`inflect' argument is ignored when `as_text==False'. To suppress this warning call `to_propositions' with the argument `inflect=None'")
+            logging.warning(
+                "`inflect' argument is ignored when `as_text==False'. To suppress this warning call `to_propositions' with the argument `inflect=None'")
         if capitalize and not as_text:
-            logging.warning("`capitalize' argument is ignored when `as_text==False'. To suppress this warning call `to_propositions' with the argument `capitalize=False")
+            logging.warning(
+                "`capitalize' argument is ignored when `as_text==False'. To suppress this warning call `to_propositions' with the argument `capitalize=False")
 
         propositions = []
 
@@ -243,14 +246,16 @@ class Clause:
                         if self.adverbials:
                             for a in self.adverbials:
                                 propositions.append(tuple(prop + [obj, a]))
-                            propositions.append(tuple(prop + [obj] + self.adverbials))
+                            propositions.append(
+                                tuple(prop + [obj] + self.adverbials))
 
                 elif self.type == "SVOC":
                     for obj in indirect_objects + direct_objects:
                         if complements:
                             for c in complements:
                                 propositions.append(tuple(prop + [obj, c]))
-                            propositions.append(tuple(prop + [obj] + complements))
+                            propositions.append(
+                                tuple(prop + [obj] + complements))
                 elif self.type == "SVC":
                     if complements:
                         for c in complements:
@@ -295,7 +300,8 @@ def _convert_clauses_to_text(propositions, inflect, capitalize):
         proposition_texts.append(" ".join(span_texts))
 
     if capitalize:  # Capitalize and add a full stop.
-        proposition_texts = [text.capitalize() + "." for text in proposition_texts]
+        proposition_texts = [
+            text.capitalize() + "." for text in proposition_texts]
 
     return proposition_texts
 
@@ -305,11 +311,9 @@ def _get_verb_matches(span):
     # (see mdmjsh answer here: https://stackoverflow.com/questions/47856247/extract-verb-phrases-using-spacy)
 
     verb_matcher = Matcher(span.vocab)
-    verb_matcher.add(
-        "Auxiliary verb phrase aux-verb", None, [{"POS": "AUX"}, {"POS": "VERB"}]
-    )
-    verb_matcher.add("Auxiliary verb phrase", None, [{"POS": "AUX"}])
-    verb_matcher.add("Verb phrase", None, [{"POS": "VERB"}])
+    verb_matcher.add("Auxiliary verb phrase aux-verb", [[ {"POS": "AUX"}, {"POS": "VERB"} ]])
+    verb_matcher.add("Auxiliary verb phrase", [[ {"POS": "AUX"} ]])
+    verb_matcher.add("Verb phrase", [[ {"POS": "VERB"} ]])
 
     return verb_matcher(span)
 
@@ -404,6 +408,7 @@ def extract_clauses(span):
     return clauses
 
 
+@Language.component("claucy")
 def extract_clauses_doc(doc):
     for sent in doc.sents:
         clauses = extract_clauses(sent)
@@ -413,7 +418,7 @@ def extract_clauses_doc(doc):
 
 
 def add_to_pipe(nlp):
-    nlp.add_pipe(extract_clauses_doc)
+    nlp.add_pipe('claucy', last=True)
 
 
 def extract_span_from_entity(token):
@@ -455,7 +460,8 @@ def extract_ccs_from_token(token):
             ],
             key=lambda x: x.i,
         )
-        entities = [Span(token.doc, start=children[0].i, end=children[-1].i + 1)]
+        entities = [Span(token.doc, start=children[0].i,
+                         end=children[-1].i + 1)]
     else:
         entities = [Span(token.doc, start=token.i, end=token.i + 1)]
     for c in token.children:
