@@ -11,8 +11,10 @@ Clausie as a spacy library
 import spacy
 import lemminflect
 import logging
+from typing import List, Tuple
 import typing
 from spacy import Language
+from .range import StartEnd
 
 from spacy.tokens import Span, Doc
 from spacy.matcher import Matcher
@@ -311,9 +313,10 @@ def _get_verb_matches(span):
     # (see mdmjsh answer here: https://stackoverflow.com/questions/47856247/extract-verb-phrases-using-spacy)
 
     verb_matcher = Matcher(span.vocab)
-    verb_matcher.add("Auxiliary verb phrase aux-verb", [[ {"POS": "AUX"}, {"POS": "VERB"} ]])
-    verb_matcher.add("Auxiliary verb phrase", [[ {"POS": "AUX"} ]])
-    verb_matcher.add("Verb phrase", [[ {"POS": "VERB"} ]])
+    verb_matcher.add("Auxiliary verb phrase aux-verb",
+                     [[{"POS": "AUX"}, {"POS": "VERB"}]])
+    verb_matcher.add("Auxiliary verb phrase", [[{"POS": "AUX"}]])
+    verb_matcher.add("Verb phrase", [[{"POS": "VERB"}]])
 
     return verb_matcher(span)
 
@@ -366,46 +369,141 @@ def _find_matching_child(root, allowed_types):
     return None
 
 
+def get_verb_info(span, verb):
+    subject = _get_subject(verb)
+    indirect_object = _find_matching_child(verb.root, ["dative"])
+    direct_object = _find_matching_child(verb.root, ["dobj"])
+    complement = _find_matching_child(
+        verb.root, ["ccomp", "acomp", "xcomp", "attr"]
+    )
+    adverbials = [
+        extract_span_from_entity(c)
+        for c in verb.root.children
+        if c.dep_ in ("prep", "advmod", "agent")
+    ]
+
+    objects = [verb, subject, indirect_object,
+               direct_object, complement, *adverbials]
+
+    start = min([o.start_char for o in objects if o != None])
+    end = max([o.end_char for o in objects if o != None])
+
+    part = span.text[start: end]
+    return {
+        'verb': verb,
+        'subject': subject,
+        'start': start,
+        'end': end,
+        'part': part
+    }
+
+
+def getPairs(n):
+    pairs: List[Tuple[int, int]] = []
+    for i in range(n):
+        for j in range(i, n):
+            if i == j:
+                continue
+
+            pairs.append((i, j))
+    return pairs
+
+
+def isSuperposed(first, second):
+    range1 = StartEnd(first['start'], first['end'])
+    range2 = StartEnd(second['start'], second['end'])
+    return range1.intersects(range2)
+
+
+def removeSuperpositions(span, verb_infos):
+    cleaned = [*verb_infos]
+    n = len(verb_infos)
+    pairs = getPairs(n)
+
+    for p in pairs:
+        first = verb_infos[p[0]]
+        second = verb_infos[p[1]]
+
+        if isSuperposed(first, second):
+            cleaned.remove(first)
+            cleaned.remove(second)
+
+            start = min(first['start'], second['start'])
+            end = max(first['end'], second['end'])
+            cleaned.append({
+                'start': start,
+                'end': end,
+                'part': span.text[start: end]
+            })
+
+    return cleaned
+
+
 def extract_clauses(span):
     clauses = []
 
+    parts = []
+
     verb_chunks = _get_verb_chunks(span)
-    for verb in verb_chunks:
+    all_verb_info = [get_verb_info(span, verb) for verb in verb_chunks]
 
-        subject = _get_subject(verb)
-        if not subject:
-            continue
+    cleaned = removeSuperpositions(span, all_verb_info)
 
-        # Check if there are phrases of the form, "AE, a scientist of ..."
-        # If so, add a new clause of the form:
-        # <AE, is, a scientist>
-        for c in subject.root.children:
-            if c.dep_ == "appos":
-                complement = extract_span_from_entity(c)
-                clause = Clause(subject=subject, complement=complement)
-                clauses.append(clause)
+    for i in range(len(span)):
+        tok = span[i:i+1]
 
-        indirect_object = _find_matching_child(verb.root, ["dative"])
-        direct_object = _find_matching_child(verb.root, ["dobj"])
-        complement = _find_matching_child(
-            verb.root, ["ccomp", "acomp", "xcomp", "attr"]
-        )
-        adverbials = [
-            extract_span_from_entity(c)
-            for c in verb.root.children
-            if c.dep_ in ("prep", "advmod", "agent")
-        ]
+        part = span.text[tok.start_char: tok.end_char]
+        tokRange = StartEnd(tok.start_char, tok.end_char)
+        isNew = not any(
+            [StartEnd(c['start'], c['end']).intersects(tokRange) for c in cleaned])
+        if (isNew):
+            cleaned.append({
+                'start': tokRange.start,
+                'end': tokRange.end,
+                'part': part
+            })
 
-        clause = Clause(
-            subject=subject,
-            verb=verb,
-            indirect_object=indirect_object,
-            direct_object=direct_object,
-            complement=complement,
-            adverbials=adverbials,
-        )
-        clauses.append(clause)
-    return clauses
+    parts = sorted(cleaned, key=lambda x: x['start'], reverse=False)
+
+    # for verb in verb_chunks:
+
+    #     subject = _get_subject(verb)
+    #     if not subject:
+    #         continue
+
+    # Check if there are phrases of the form, "AE, a scientist of ..."
+    # If so, add a new clause of the form:
+    # <AE, is, a scientist>
+
+    # TODO: comeback to this later
+    # for c in subject.root.children:
+    #     if c.dep_ == "appos":
+    #         complement = extract_span_from_entity(c)
+    #         clause = Clause(subject=subject, complement=complement)
+    #         clauses.append(clause)
+
+    # indirect_object = _find_matching_child(verb.root, ["dative"])
+    # direct_object = _find_matching_child(verb.root, ["dobj"])
+    # complement = _find_matching_child(
+    #     verb.root, ["ccomp", "acomp", "xcomp", "attr"]
+    # )
+    # adverbials = [
+    #     extract_span_from_entity(c)
+    #     for c in verb.root.children
+    #     if c.dep_ in ("prep", "advmod", "agent")
+    # ]
+
+    # clause = Clause(
+    #     subject=subject,
+    #     verb=verb,
+    #     indirect_object=indirect_object,
+    #     direct_object=direct_object,
+    #     complement=complement,
+    #     adverbials=adverbials,
+    # )
+    # clauses.append(clause)
+
+    return parts
 
 
 @Language.component("claucy")
