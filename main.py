@@ -15,12 +15,12 @@ doc = nlp(utt)
 i = 0
 print(chalk.green("clauses:"))
 for x in doc._.clauses:
-    print(i, x['part'])
+    print(i, "({}) {}".format(x.type, x.text))
     i += 1
 
-print("\n")
-print(chalk.green("logical clauses:"))
-i = 0
-for x in [p for c in doc._.logical_clauses for p in c.to_propositions(as_text=True, inflect=None)]:
-    print(i, x)
-    i += 1
+# print("\n")
+# print(chalk.green("logical clauses:"))
+# i = 0
+# for x in [p for c in doc._.logical_clauses for p in c.to_propositions(as_text=True, inflect=None)]:
+#     print(i, x)
+#     i += 1
