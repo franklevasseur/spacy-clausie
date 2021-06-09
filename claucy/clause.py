@@ -127,9 +127,9 @@ class Clause:
 
         self.doc = self.subject.doc
 
-        self.type = self._get_clause_type()
+        self.type = self.get_clause_type()
 
-    def _get_clause_type(self):
+    def get_clause_type(self):
         has_verb = self.verb is not None
         has_complement = self.complement is not None
         has_adverbial = len(self.adverbials) > 0

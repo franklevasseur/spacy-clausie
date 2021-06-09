@@ -43,12 +43,22 @@ class SentencePart:
         range2 = StartEnd(second.start, second.end)
         return range1.intersects(range2)
 
-    def __init__(self, type: PartType, start: int, end: int, text: str, clause: Clause = None):
+    def __init__(self, type: PartType, start: int, end: int, text: str, clause: Clause = None, token: Token = None):
         self.type = type
         self.start = start
         self.end = end
         self.text = text
         self.clause = clause
+        self.token = token
+
+    def get_formatted_type(self):
+        if self.type == PartType.clause:
+            return "{}-{}".format(self.type, self.clause.get_clause_type())
+
+        if self.type == PartType.other and self.token:
+            return "{}-{}".format(self.type, self.token.dep_)
+
+        return str(self.type)
 
 
 class PartType(Enum):

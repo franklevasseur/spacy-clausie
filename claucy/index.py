@@ -111,7 +111,8 @@ def split_parts(span: Span):
             [StartEnd(c.start, c.end).intersects(tokRange) for c in parts])
         if (isNew):
             type = PartType.pick_type(token)
-            newPart = SentencePart(type, tokRange.start, tokRange.end, text)
+            newPart = SentencePart(type, tokRange.start,
+                                   tokRange.end, text, token=token)
             parts.append(newPart)
 
     parts = sorted(parts, key=lambda x: x.start, reverse=False)
