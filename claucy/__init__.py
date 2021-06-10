@@ -1,1 +1,1 @@
-from .claucy import *
+from .index import *

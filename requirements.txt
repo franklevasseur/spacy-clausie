@@ -1,0 +1,6 @@
+setuptools
+wheel
+spacy
+lemminflect
+pychalk
+spacy-transformers
