@@ -1,3 +1,4 @@
+from typing import Tuple
 from spacy.tokens import Span
 from spacy.matcher import Matcher
 
@@ -108,22 +109,47 @@ def get_verb_chunks(span):
     return verb_chunks
 
 
-def get_subject(verb):
+def is_verb_question(verb):
+
     for c in verb.root.children:
-        if c.dep_ in ["nsubj", "nsubjpass"]:
+        if c.dep_ in ["nsubj", "nsubjpass", "expl"]:
+            subject = extract_span_from_entity(c)
+            if verb.start_char < subject.start_char:
+                return True
+
+    if verb.root.dep_ == 'aux' and verb.root.head.pos_ == 'VERB':
+        for c in verb.root.head.children:
+            if c.dep_ in ["nsubj", "nsubjpass", "expl"]:
+                subject = extract_span_from_entity(c)
+                if verb.start_char < subject.start_char:
+                    return True
+
+    return False
+
+
+def contains_question(span):
+    verbs = get_verb_chunks(span)
+    return any([is_verb_question(verb) for verb in verbs])
+
+
+def get_subject(verb) -> Span:
+    for c in verb.root.children:
+        if c.dep_ in ["nsubj", "nsubjpass", "expl"]:
             subject = extract_span_from_entity(c)
             return subject
 
     root = verb.root
     while root.dep_ in ["conj", "cc", "advcl", "acl", "ccomp", "ROOT"]:
         for c in root.children:
-            if c.dep_ in ["nsubj", "nsubjpass"]:
+            if c.dep_ in ["nsubj", "nsubjpass", "expl"]:
                 subject = extract_span_from_entity(c)
                 return subject
 
             if c.dep_ in ["acl", "advcl"]:
                 subject = find_verb_subject(c)
-                return extract_span_from_entity(subject) if subject else None
+                subject = extract_span_from_entity(
+                    subject) if subject else None
+                return subject
 
         # Break cycles
         if root == verb.root.head:
@@ -135,6 +161,7 @@ def get_subject(verb):
         if c.dep_ in ["nsubj", "nsubj:pass", "nsubjpass"]:
             subject = extract_span_from_entity(c)
             return subject
+
     return None
 
 

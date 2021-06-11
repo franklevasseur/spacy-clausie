@@ -26,25 +26,49 @@ logging.basicConfig(level=logging.INFO)
 Doc.set_extension("clauses", default=[], force=True)
 Span.set_extension("clauses", default=[], force=True)
 
+QUESTION_WORDS = [
+    'how',
+    'what',
+    'when',
+    'where',
+    'who'
+]
+
 
 def get_part_from_clause(span: Span, clause: Clause):
+
     objects = [clause.verb, clause.subject, clause.indirect_object,
                clause.direct_object, clause.complement, *clause.adverbials]
 
-    start = min([o.start_char for o in objects if o != None])
-    end = max([o.end_char for o in objects if o != None])
+    start_tok = min([o.start for o in objects if o != None])
+    end_tok = max([o.end for o in objects if o != None])
 
-    text = span.text[start - span.start_char: end - span.start_char]
+    if clause.verb_question != None:
+        start_tok = clause.verb_question.start
 
-    part = SentencePart(PartType.clause, start, end, text, clause)
+    new_span = span[start_tok - span.start: end_tok - span.start]
+
+    part_type = PartType.question if contains_question(
+        new_span) else PartType.clause
+
+    part = SentencePart(part_type, new_span.start_char,
+                        new_span.end_char, new_span.text, clause)
 
     return part
 
 
-def get_clauses_for_verb(verb: Token, includeAppos=False) -> List[Clause]:
+def get_clauses_for_verb(verb: Span, includeAppos=False) -> List[Clause]:
     clauses = []
 
+    is_question = is_verb_question(verb)
     subject = get_subject(verb)
+
+    if not subject and is_question and verb.root.pos_ == 'AUX' and verb.root.head.pos_ == 'VERB':
+        head_i = verb.root.head.i - verb.sent.start
+        [head_clause] = get_clauses_for_verb(verb.sent[head_i: head_i + 1])
+        head_clause.verb_question = verb
+        return [head_clause]
+
     if not subject:
         return []
 
@@ -78,6 +102,8 @@ def get_clauses_for_verb(verb: Token, includeAppos=False) -> List[Clause]:
         adverbials=adverbials,
     )
 
+    # print(clause.to_propositions(as_text=True, inflect=None))
+
     clauses.append(clause)
     return clauses
 
@@ -90,12 +116,29 @@ def get_clauses_for_verb(verb: Token, includeAppos=False) -> List[Clause]:
 
 
 def split_parts(span: Span):
+
+    # if (contains_question(span)):
+    #     return [SentencePart(PartType.question, span.start_char, span.end_char, span.text)]
+
     verb_chunks = get_verb_chunks(span)
 
     clauses = [c for v in verb_chunks for c in get_clauses_for_verb(
         v, includeAppos=False)]
 
-    all_clause_parts = [get_part_from_clause(span, c) for c in clauses]
+    uniq_clauses = []
+    for c in clauses:
+        already_added_clause = next(
+            filter(lambda uc: uc.verb == c.verb, uniq_clauses), None)
+        if already_added_clause == None:
+            uniq_clauses.append(c)
+            continue
+
+        if already_added_clause.verb_question == None and c.verb_question != None:
+            uniq_clauses.remove(already_added_clause)
+            uniq_clauses.append(c)
+            continue
+
+    all_clause_parts = [get_part_from_clause(span, c) for c in uniq_clauses]
     merged_clause_parts = SentencePart.merge(span, all_clause_parts)
 
     parts: List[SentencePart] = [*merged_clause_parts]
@@ -116,6 +159,22 @@ def split_parts(span: Span):
             parts.append(newPart)
 
     parts = sorted(parts, key=lambda x: x.start, reverse=False)
+    parts = [x for x in filter(
+        lambda p: p.type != PartType.punctuation, parts)]
+
+    i = 1
+    while i < len(parts):
+        previous_part = parts[i - 1]
+        current_part = parts[i]
+
+        if (current_part.type == PartType.other and previous_part.type == PartType.other):
+            parts[i - 1] = SentencePart(PartType.other, previous_part.start, current_part.end, "{} {}".format(
+                previous_part.text, current_part.text))
+            del parts[i]
+            continue
+
+        i += 1
+
     return parts
 
 

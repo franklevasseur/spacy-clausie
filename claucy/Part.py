@@ -13,12 +13,15 @@ class SentencePart:
     @staticmethod
     def merge(span: Span, parts: List[SentencePart]) -> List[SentencePart]:
         merged = [*parts]
-        n = len(parts)
-        pairs = getPairs(n)
 
-        for p in pairs:
-            first = parts[p[0]]
-            second = parts[p[1]]
+        pairs = getPairs(len(merged))
+        i = 0
+        while i < len(pairs):
+
+            p = pairs[i]
+
+            first = merged[p[0]]
+            second = merged[p[1]]
 
             if SentencePart.isSuperposed(first, second):
                 merged.remove(first)
@@ -34,6 +37,12 @@ class SentencePart:
                     merged_type, start, end, text, first.clause or second.clause)
 
                 merged.append(mergedPart)
+
+                i = 0
+                pairs = getPairs(len(merged))
+                continue
+
+            i += 1
 
         return merged
 
@@ -62,11 +71,12 @@ class SentencePart:
 
 
 class PartType(Enum):
-    clause = (0, 'clause')
-    interjection = (1, 'intj')
-    coordinating_conjunction = (2, 'cc')
-    punctuation = (3, 'punct')
-    other = (4, 'other')
+    question = (0, 'q')
+    clause = (1, 'clause')
+    interjection = (2, 'intj')
+    coordinating_conjunction = (3, 'cc')
+    punctuation = (4, 'punct')
+    other = (5, 'other')
 
     @staticmethod
     def merge_types(first: SentencePart, second: SentencePart):

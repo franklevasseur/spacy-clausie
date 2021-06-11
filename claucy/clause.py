@@ -91,6 +91,7 @@ class Clause:
         direct_object: typing.Optional[Span] = None,
         complement: typing.Optional[Span] = None,
         adverbials: typing.List[Span] = None,
+        verb_question: Span = None
     ):
         """
 
@@ -124,6 +125,7 @@ class Clause:
         self.direct_object = direct_object
         self.complement = complement
         self.adverbials = adverbials
+        self.verb_question = verb_question
 
         self.doc = self.subject.doc
 
