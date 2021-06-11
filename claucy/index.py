@@ -31,7 +31,8 @@ QUESTION_WORDS = [
     'what',
     'when',
     'where',
-    'who'
+    'who',
+    'why'
 ]
 
 
@@ -44,8 +45,14 @@ def get_part_from_clause(span: Span, clause: Clause):
     end_tok = max([o.end for o in objects if o != None])
 
     if clause.verb_question != None:
-        preceding_question_words = [x for x in filter(lambda t: t.text.lower(
-        ) in QUESTION_WORDS, span[start_tok:clause.verb_question.start])]
+
+        previous_tokens = span[start_tok -
+                               span.start:clause.verb_question.start - span.start]
+
+        def is_question_word(t): return t.text.lower() in QUESTION_WORDS
+        preceding_question_words_filter = filter(
+            is_question_word, previous_tokens)
+        preceding_question_words = [x for x in preceding_question_words_filter]
 
         if len(preceding_question_words) == 0:
             start_tok = clause.verb_question.start
@@ -169,8 +176,8 @@ def split_parts(span: Span):
             parts.append(newPart)
 
     parts = sorted(parts, key=lambda x: x.start, reverse=False)
-    parts = [x for x in filter(
-        lambda p: p.type != PartType.punctuation, parts)]
+    # parts = [x for x in filter(
+    #     lambda p: p.type != PartType.punctuation, parts)]
 
     i = 1
     while i < len(parts):

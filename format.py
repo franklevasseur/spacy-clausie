@@ -21,6 +21,11 @@ def format_clause(utt: str, parts):
 
     idx = 0
     for c in parts:
+        if c.type == PartType.punctuation:
+            formatted += c.text
+            idx = c.end + 1
+            continue
+
         before = utt[idx:c.start]
         content = utt[c.start:c.end]
 

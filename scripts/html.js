@@ -30,7 +30,9 @@ console.log(
   '<pre style="background:#343a40; width: fit-content; color: white;">'
 );
 rl.on("line", (line) => {
-  const str = convert.toHtml(line);
+  let str = convert.toHtml(line);
+  str = str.replace(/#A50/g, "rgb(255, 255, 0)");
+  str = str.replace(/#0A0/g, "rgb(0, 255, 0)");
   console.log(str);
 }).on("close", () => {
   console.log("</pre>");
