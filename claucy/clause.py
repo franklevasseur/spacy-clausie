@@ -127,11 +127,12 @@ class Clause:
         self.adverbials = adverbials
         self.verb_question = verb_question
 
-        self.doc = self.subject.doc
+        self.doc = self.subject.doc if self.subject else self.verb.doc
 
         self.type = self.get_clause_type()
 
     def get_clause_type(self):
+        has_subject = self.subject is not None
         has_verb = self.verb is not None
         has_complement = self.complement is not None
         has_adverbial = len(self.adverbials) > 0

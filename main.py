@@ -19,6 +19,9 @@ default_utts = [
     # "this did not help, can you please tell me how much it is tu upgrade",
     # "I need to get from newark De to American University can you help me",
     # "I purchased a ticket for my son this summer that I never used. I am now trying to track down information on the ticket so that I can use it. Can you help?"
+    # "Planning a trip to Italy anywhere from end of april to early june for 10 days",
+    # "I was making a reservation using miles and somehow clicked on something midway and did not finish--how can I find it",
+    # "I am trying to get a quote leaving Indianapolis going to Wisconsin"
 ]
 
 utterances = [sys.argv[1]] if len(

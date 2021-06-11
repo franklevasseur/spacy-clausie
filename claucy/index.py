@@ -44,7 +44,15 @@ def get_part_from_clause(span: Span, clause: Clause):
     end_tok = max([o.end for o in objects if o != None])
 
     if clause.verb_question != None:
-        start_tok = clause.verb_question.start
+        preceding_question_words = [x for x in filter(lambda t: t.text.lower(
+        ) in QUESTION_WORDS, span[start_tok:clause.verb_question.start])]
+
+        if len(preceding_question_words) == 0:
+            start_tok = clause.verb_question.start
+        else:
+            last_question_word = max(
+                preceding_question_words, key=lambda t: t.i)
+            start_tok = last_question_word.i
 
     new_span = span[start_tok - span.start: end_tok - span.start]
 
@@ -69,7 +77,9 @@ def get_clauses_for_verb(verb: Span, includeAppos=False) -> List[Clause]:
         head_clause.verb_question = verb
         return [head_clause]
 
-    if not subject:
+    # accepts sentences like "trying to get to NY" with no subject
+    verb_is_first = verb.root == verb.sent[0]
+    if not subject and not verb_is_first:
         return []
 
     # Check if there are phrases of the form, "AE, a scientist of ..."
@@ -125,7 +135,7 @@ def split_parts(span: Span):
     clauses = [c for v in verb_chunks for c in get_clauses_for_verb(
         v, includeAppos=False)]
 
-    uniq_clauses = []
+    uniq_clauses = []  # rm duplicate clauses with same verb
     for c in clauses:
         already_added_clause = next(
             filter(lambda uc: uc.verb == c.verb, uniq_clauses), None)

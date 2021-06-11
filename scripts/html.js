@@ -27,7 +27,7 @@ var rl = readline.createInterface({
 });
 
 console.log(
-  '<pre style="background:black; width: fit-content; color: white;">'
+  '<pre style="background:#343a40; width: fit-content; color: white;">'
 );
 rl.on("line", (line) => {
   const str = convert.toHtml(line);
