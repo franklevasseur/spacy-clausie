@@ -85,6 +85,7 @@ def get_clauses_for_verb(verb: Span, includeAppos=False) -> List[Clause]:
         return [head_clause]
 
     # accepts sentences like "trying to get to NY" with no subject
+    # TODO: find a way to make this more robust with a lot more case like "Just spoke with your Retentio Dept to lower my monthly bill"
     verb_is_first = verb.root == verb.sent[0]
     if not subject and not verb_is_first:
         return []

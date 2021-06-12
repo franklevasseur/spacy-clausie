@@ -75,8 +75,9 @@ class PartType(Enum):
     clause = (1, 'clause')
     interjection = (2, 'intj')
     coordinating_conjunction = (3, 'cc')
-    punctuation = (4, 'punct')
-    other = (5, 'other')
+    marker = (4, 'mark')
+    punctuation = (5, 'punct')
+    other = (6, 'other')
 
     @staticmethod
     def merge_types(first: SentencePart, second: SentencePart):
@@ -91,6 +92,9 @@ class PartType(Enum):
 
         if (tok.dep_ == 'cc'):
             return PartType.coordinating_conjunction
+
+        if (tok.dep_ == 'mark'):
+            return PartType.marker
 
         if (tok.dep_ == 'punct'):
             return PartType.punctuation

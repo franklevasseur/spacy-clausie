@@ -1,6 +1,9 @@
 from claucy.Part import PartType
 import chalk
 
+Color=lambda code: '\033[{}m'.format(code)
+NC='\033[0m' # No Color
+
 
 def get_chalk(clause):
     if clause.type == PartType.question:
@@ -9,6 +12,8 @@ def get_chalk(clause):
         return chalk.yellow
     if clause.type == PartType.coordinating_conjunction:
         return chalk.blue
+    if clause.type == PartType.marker:
+        return lambda string: "{}{}{}".format(Color('1;31'), string, NC)
     if clause.type == PartType.interjection:
         return chalk.green
     if clause.type == PartType.other:
