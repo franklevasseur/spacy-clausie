@@ -1,3 +1,4 @@
+from claucy.confidence import compute_confidence
 from format import format_clause
 from claucy.Part import PartType
 import spacy
@@ -7,11 +8,13 @@ import chalk
 import json
 
 spacy.prefer_gpu()
-nlp = spacy.load("en_core_web_trf")
+# nlp = spacy.load("en_core_web_lg") # faster but feels sloppier
+nlp = spacy.load("en_core_web_trf") # slower but feels more accurate
 claucy.add_to_pipe(nlp)
 
 default_utts = [
-    # "Hi there! my name is mathilda and I'm a reel human lol! wanna hang out ?",
+    # "Hi! my name is mathilda and I'm a reel human. Do you want to hang out ?", # easier
+    # "Hi there! my name is mathilda and I'm a reel human lol! wanna hang out ?", # harder
     # "hello I'm Frank, LOL! what are you cooking for tonight's dinner ?",
     # "Hi My dog loves cows and I prefer dogs, but johny, which is a really good spike ball player, loves cats. what is your favorite color ?",
     # "Hi my name is Borat and the cat loves the color blue. How do you do, mister Frank ?",
@@ -43,4 +46,8 @@ for utt in utterances:
 
     doc = nlp(utt)
 
-    print(format_clause(utt, doc._.clauses))
+    parts = doc._.clauses
+    conf = compute_confidence(parts)
+
+    formatted_line = format_clause(utt, doc._.clauses, conf)
+    print(formatted_line)

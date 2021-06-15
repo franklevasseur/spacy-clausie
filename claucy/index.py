@@ -66,8 +66,7 @@ def get_part_from_clause(span: Span, clause: Clause):
     part_type = PartType.question if contains_question(
         new_span) else PartType.clause
 
-    part = SentencePart(part_type, new_span.start_char,
-                        new_span.end_char, new_span.text, clause)
+    part = SentencePart(part_type, StartEnd(new_span.start_char, new_span.end_char), StartEnd(new_span.start, new_span.end), new_span.text, clause)
 
     return part
 
@@ -138,9 +137,6 @@ def get_clauses_for_verb(verb: Span, includeAppos=False) -> List[Clause]:
 
 def split_parts(span: Span):
 
-    # if (contains_question(span)):
-    #     return [SentencePart(PartType.question, span.start_char, span.end_char, span.text)]
-
     verb_chunks = get_verb_chunks(span)
 
     clauses = [c for v in verb_chunks for c in get_clauses_for_verb(
@@ -168,20 +164,16 @@ def split_parts(span: Span):
         token = span[i]
         token_span = span[i:i+1]
 
-        text = span.text[token_span.start_char -
-                         span.start_char: token_span.end_char - span.start_char]
+        text = span[token_span.start - span.start: token_span.end - span.end]
         tokRange = StartEnd(token_span.start_char, token_span.end_char)
         isNew = not any(
-            [StartEnd(c.start, c.end).intersects(tokRange) for c in parts])
+            [StartEnd(c.start_char, c.end_char).intersects(tokRange) for c in parts])
         if (isNew):
             type = PartType.pick_type(token)
-            newPart = SentencePart(type, tokRange.start,
-                                   tokRange.end, text, token=token)
+            newPart = SentencePart(type, StartEnd(token_span.start_char, token_span.end_char), StartEnd(token_span.start, token_span.end), text, token=token)
             parts.append(newPart)
 
-    parts = sorted(parts, key=lambda x: x.start, reverse=False)
-    # parts = [x for x in filter(
-    #     lambda p: p.type != PartType.punctuation, parts)]
+    parts = sorted(parts, key=lambda x: x.start_char, reverse=False)
 
     i = 1
     while i < len(parts):
@@ -189,8 +181,11 @@ def split_parts(span: Span):
         current_part = parts[i]
 
         if (current_part.type == PartType.other and previous_part.type == PartType.other):
-            parts[i - 1] = SentencePart(PartType.other, previous_part.start, current_part.end, "{} {}".format(
-                previous_part.text, current_part.text))
+            parts[i - 1] = SentencePart(PartType.other, 
+                            StartEnd(previous_part.start_char, current_part.end_char), 
+                            StartEnd(previous_part.start, current_part.end), 
+                            span[previous_part.start: current_part.end]
+                        )
             del parts[i]
             continue
 

@@ -1,4 +1,5 @@
-from claucy.Part import PartType
+from typing import List
+from claucy.Part import PartType, SentencePart
 import chalk
 
 Color=lambda code: '\033[{}m'.format(code)
@@ -21,18 +22,18 @@ def get_chalk(clause):
     return lambda x: x
 
 
-def format_clause(utt: str, parts):
+def format_clause(utt: str, parts: List[SentencePart], conf = 1):
     formatted = ""
 
     idx = 0
     for c in parts:
         if c.type == PartType.punctuation:
-            formatted += c.text
-            idx = c.end + 1
+            formatted += c.span.sent.text[c.start_char:c.end_char]
+            idx = c.end_char + 1
             continue
 
-        before = utt[idx:c.start]
-        content = utt[c.start:c.end]
+        before = utt[idx:c.start_char]
+        content = utt[c.start_char:c.end_char]
 
         chalker = get_chalk(c)
 
@@ -46,9 +47,10 @@ def format_clause(utt: str, parts):
 
         formatted += f'{before} {open_sq_br}{content}{close_sq_br}{open_par}{close_type}{close_par}'
 
-        idx = c.end + 1
+        idx = c.end_char + 1
 
     after = utt[idx:]
     formatted += after
 
-    return formatted
+    formatted_conf = "{:.2f}".format(conf)
+    return "({}){}".format(chalk.bold(formatted_conf), formatted)

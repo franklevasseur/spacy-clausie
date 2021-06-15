@@ -27,14 +27,16 @@ class SentencePart:
                 merged.remove(first)
                 merged.remove(second)
 
+                start_char = min(first.start_char, second.start_char)
+                end_char = max(first.end_char, second.end_char)
+
                 start = min(first.start, second.start)
                 end = max(first.end, second.end)
-                text = span.text[start -
-                                 span.start_char: end - span.start_char]
+
+                text = span[start - span.start: end - span.start]
 
                 merged_type = PartType.merge_types(first, second)
-                mergedPart = SentencePart(
-                    merged_type, start, end, text, first.clause or second.clause)
+                mergedPart = SentencePart(merged_type, StartEnd(start_char, end_char), StartEnd(start, end), text, first.clause or second.clause)
 
                 merged.append(mergedPart)
 
@@ -48,15 +50,20 @@ class SentencePart:
 
     @staticmethod
     def isSuperposed(first: SentencePart, second: SentencePart):
-        range1 = StartEnd(first.start, first.end)
-        range2 = StartEnd(second.start, second.end)
+        range1 = StartEnd(first.start_char, first.end_char)
+        range2 = StartEnd(second.start_char, second.end_char)
         return range1.intersects(range2)
 
-    def __init__(self, type: PartType, start: int, end: int, text: str, clause: Clause = None, token: Token = None):
+    def __init__(self, type: PartType, char_range: StartEnd, tok_range: StartEnd, span: Span, clause: Clause = None, token: Token = None):
         self.type = type
-        self.start = start
-        self.end = end
-        self.text = text
+        self.start_char = char_range.start
+        self.end_char = char_range.end
+
+        self.start = tok_range.start
+        self.end = tok_range.end
+
+        self.span = span
+
         self.clause = clause
         self.token = token
 
