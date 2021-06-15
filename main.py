@@ -21,10 +21,10 @@ default_utts = [
     # "I purchased a ticket for my son this summer that I never used. I am now trying to track down information on the ticket so that I can use it. Can you help?",
     # "Planning a trip to Italy anywhere from end of april to early june for 10 days",
     # "I was making a reservation using miles and somehow clicked on something midway and did not finish--how can I find it",
-    # "I am trying to get a quote leaving Indianapolis going to Wisconsin",
     # "Why is my wifi not matching up to what it should be ?",
     # "I have a reservation on thanksgiving morning and just remembered I also have an upgrade certificate. how can i apply it to my trip",
-    # "I was making a reservation using miles and somehow clicked on something midway and did not finish--how can I find it?",
+    # "I am trying to get a quote leaving Indianapolis going to Wisconsin", # spacy sees trying as the root, but with POS == 'PART'
+    # "I was making a reservation using miles and somehow clicked on something midway and did not finish--how can I find it?", # spacy is confused with "...finish--how can..."
 ]
 
 
