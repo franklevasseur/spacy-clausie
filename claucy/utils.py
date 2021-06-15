@@ -165,11 +165,19 @@ def get_subject(verb) -> Span:
     return None
 
 
-def find_matching_child(root, allowed_types):
-    for c in root.children:
-        if c.dep_ in allowed_types:
-            return extract_span_from_entity(c)
-    return None
+def find_matching_child(root, allowed_types, pick_last=False):
+
+    matches = [x for x in filter(lambda t: t.dep_ in allowed_types, root.children)]
+    matches = [x for x in map(extract_span_from_entity, matches)]
+    matches = [x for x in sorted(matches, key=lambda t: t.end_char)]
+
+    if len(matches) <= 0:
+        return None
+
+    if pick_last:
+        return matches[-1]
+
+    return matches[0]
 
 
 def find_verb_subject(v):

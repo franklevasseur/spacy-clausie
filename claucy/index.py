@@ -105,7 +105,8 @@ def get_clauses_for_verb(verb: Span, includeAppos=False) -> List[Clause]:
     indirect_object = find_matching_child(verb.root, ["dative"])
     direct_object = find_matching_child(verb.root, ["dobj"])
     complement = find_matching_child(
-        verb.root, ["ccomp", "acomp", "xcomp", "attr"]
+        verb.root, ["ccomp", "acomp", "xcomp", "attr"],
+        pick_last=True # complement is more often than not after the verb
     )
     adverbials = [
         extract_span_from_entity(c)
