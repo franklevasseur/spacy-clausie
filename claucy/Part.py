@@ -36,7 +36,8 @@ class SentencePart:
                 text = span[start - span.start: end - span.start]
 
                 merged_type = PartType.merge_types(first, second)
-                mergedPart = SentencePart(merged_type, StartEnd(start_char, end_char), StartEnd(start, end), text, first.clause or second.clause)
+                mergedPart = SentencePart(merged_type, StartEnd(start_char, end_char), StartEnd(
+                    start, end), text, first.clause or second.clause)
 
                 merged.append(mergedPart)
 
@@ -78,21 +79,48 @@ class SentencePart:
 
 
 class PartType(Enum):
-    question = (0, 'q')
-    clause = (1, 'clause')
-    interjection = (2, 'intj')
-    coordinating_conjunction = (3, 'cc')
-    marker = (4, 'mark')
-    punctuation = (5, 'punct')
-    other = (6, 'other')
+    question = 'q'
+    clause = 'clause'
+    interjection = 'intj'
+    coordinating_conjunction = 'cc'
+    marker = 'mark'
+    punctuation = 'punct'
+    other = 'other'
 
-    @staticmethod
+    def is_same(self, other: PartType):
+        return self.value == other.value
+
+    def get_order(self):
+        if self.is_same(PartType.question):
+            return 0
+
+        if self.is_same(PartType.clause):
+            return 1
+
+        if self.is_same(PartType.interjection):
+            return 2
+
+        if self.is_same(PartType.coordinating_conjunction):
+            return 3
+
+        if self.is_same(PartType.marker):
+            return 4
+
+        if self.is_same(PartType.punctuation):
+            return 5
+
+        if self.is_same(PartType.other):
+            return 6
+
+        return -1
+
+    @ staticmethod
     def merge_types(first: SentencePart, second: SentencePart):
         first_type = first.type
         second_type = second.type
-        return min(first_type, second_type, key=lambda x: x.value[0])
+        return min(first_type, second_type, key=lambda x: x.get_order())
 
-    @staticmethod
+    @ staticmethod
     def pick_type(tok: Token):
         if (tok.dep_ == 'intj'):
             return PartType.interjection
@@ -109,4 +137,4 @@ class PartType(Enum):
         return PartType.other
 
     def __str__(self):
-        return self.value[1]
+        return self.value
