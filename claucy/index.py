@@ -66,7 +66,8 @@ def get_part_from_clause(span: Span, clause: Clause):
     part_type = PartType.question if contains_question(
         new_span) else PartType.clause
 
-    part = SentencePart(part_type, StartEnd(new_span.start_char, new_span.end_char), StartEnd(new_span.start, new_span.end), new_span.text, clause)
+    part = SentencePart(part_type, StartEnd(new_span.start_char, new_span.end_char), StartEnd(
+        new_span.start, new_span.end), new_span, clause)
 
     return part
 
@@ -105,7 +106,7 @@ def get_clauses_for_verb(verb: Span, includeAppos=False) -> List[Clause]:
     direct_object = find_matching_child(verb.root, ["dobj"])
     complement = find_matching_child(
         verb.root, ["ccomp", "acomp", "xcomp", "attr"],
-        pick_last=True # complement is more often than not after the verb
+        pick_last=True  # complement is more often than not after the verb
     )
     adverbials = [
         extract_span_from_entity(c)
@@ -164,13 +165,14 @@ def split_parts(span: Span):
         token = span[i]
         token_span = span[i:i+1]
 
-        text = span[token_span.start - span.start: token_span.end - span.end]
+        text = span[token_span.start - span.start: token_span.end - span.start]
         tokRange = StartEnd(token_span.start_char, token_span.end_char)
         isNew = not any(
             [StartEnd(c.start_char, c.end_char).intersects(tokRange) for c in parts])
         if (isNew):
             type = PartType.pick_type(token)
-            newPart = SentencePart(type, StartEnd(token_span.start_char, token_span.end_char), StartEnd(token_span.start, token_span.end), text, token=token)
+            newPart = SentencePart(type, StartEnd(token_span.start_char, token_span.end_char), StartEnd(
+                token_span.start, token_span.end), text, token=token)
             parts.append(newPart)
 
     parts = sorted(parts, key=lambda x: x.start_char, reverse=False)
@@ -181,11 +183,14 @@ def split_parts(span: Span):
         current_part = parts[i]
 
         if (current_part.type == PartType.other and previous_part.type == PartType.other):
-            parts[i - 1] = SentencePart(PartType.other, 
-                            StartEnd(previous_part.start_char, current_part.end_char), 
-                            StartEnd(previous_part.start, current_part.end), 
-                            span[previous_part.start: current_part.end]
-                        )
+            parts[i - 1] = SentencePart(PartType.other,
+                                        StartEnd(previous_part.start_char,
+                                                 current_part.end_char),
+                                        StartEnd(previous_part.start,
+                                                 current_part.end),
+                                        span[previous_part.start -
+                                             span.start: current_part.end - span.start]
+                                        )
             del parts[i]
             continue
 

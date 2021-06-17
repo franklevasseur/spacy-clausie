@@ -2,8 +2,11 @@ from typing import List
 from claucy.Part import PartType, SentencePart
 import chalk
 
-Color=lambda code: '\033[{}m'.format(code)
-NC='\033[0m' # No Color
+
+def Color(code): return '\033[{}m'.format(code)
+
+
+NC = '\033[0m'  # No Color
 
 
 def get_chalk(clause):
@@ -22,13 +25,13 @@ def get_chalk(clause):
     return lambda x: x
 
 
-def format_clause(utt: str, parts: List[SentencePart], conf = 1):
+def format_clause(utt: str, parts: List[SentencePart], conf=1):
     formatted = ""
 
     idx = 0
     for c in parts:
         if c.type == PartType.punctuation:
-            formatted += c.span.sent.text[c.start_char:c.end_char]
+            formatted += c.span.text
             idx = c.end_char + 1
             continue
 

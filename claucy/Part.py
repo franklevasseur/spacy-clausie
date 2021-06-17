@@ -55,8 +55,8 @@ class SentencePart:
         range2 = StartEnd(second.start_char, second.end_char)
         return range1.intersects(range2)
 
-    def __init__(self, type: PartType, char_range: StartEnd, tok_range: StartEnd, span: Span, clause: Clause = None, token: Token = None):
-        self.type = type
+    def __init__(self, part_type: PartType, char_range: StartEnd, tok_range: StartEnd, span: Span, clause: Clause = None, token: Token = None):
+        self.type = part_type
         self.start_char = char_range.start
         self.end_char = char_range.end
 
